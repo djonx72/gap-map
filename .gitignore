@@ -1,0 +1,291 @@
+# ============================================================
+#  GapMap — Root .gitignore
+#  Covers ALL phases (1–3) and the full tech stack:
+#  React + Vite + Tailwind · Node.js + Express · Supabase ·
+#  Gemini API · Claude API (Phase 2+) · Vercel · Render ·
+#  Railway · PDF Export (Phase 3) · Testing · OS · Editors
+# ============================================================
+
+
+# ─────────────────────────────────────────
+#  🔐 ENVIRONMENT VARIABLES — NEVER COMMIT
+#  Covers: Supabase keys, Gemini API key,
+#  Claude API key (Phase 2+), JWT secrets,
+#  DB connection strings, all deployment vars
+# ─────────────────────────────────────────
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production
+.env.production.local
+.env.staging
+.env.staging.local
+**/.env
+**/.env.*
+
+# Named env files (extra safety net)
+*.env
+backend/.env*
+client/.env*
+
+
+# ─────────────────────────────────────────
+#  🛡️ API KEYS & SECRETS
+#  Gemini API key, Claude API key, Supabase
+#  service role key, JWT secret, any future
+#  third-party API credentials
+# ─────────────────────────────────────────
+secrets/
+.secrets/
+*.pem
+*.key
+*.cert
+*.p12
+*.pfx
+*.crt
+*.der
+*.jks
+*.keystore
+
+# Specific key file patterns used in GapMap
+*gemini*.json
+*claude*.json
+*supabase*.env
+service-account*.json
+credentials*.json
+
+
+# ─────────────────────────────────────────
+#  📦 NODE / NPM
+#  NOTE: package-lock.json is intentionally
+#  NOT ignored — commit it for reproducible
+#  installs across the team
+# ─────────────────────────────────────────
+node_modules/
+**/node_modules/
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Optional package manager files
+.pnpm-store/
+.yarn/
+.npm
+
+
+# ─────────────────────────────────────────
+#  ⚡ VITE (Frontend — React)
+#  Build output, cache, SSR artifacts
+# ─────────────────────────────────────────
+client/dist/
+client/dist-ssr/
+client/.vite/
+*.local
+
+
+# ─────────────────────────────────────────
+#  🗂️ BUILD OUTPUTS (general)
+# ─────────────────────────────────────────
+dist/
+build/
+out/
+.output/
+
+
+# ─────────────────────────────────────────
+#  📊 RECHARTS / CHART LIBRARIES
+#  (Used in Chunk 9 — Trajectory Tracking)
+#  No build artifacts but covering any
+#  auto-generated chart export files
+# ─────────────────────────────────────────
+*.chart.png
+*.chart.svg
+chart-exports/
+
+
+# ─────────────────────────────────────────
+#  📄 PDF EXPORTS
+#  (Chunk 14 — Report Export feature)
+#  Generated PDF reports must NOT be
+#  committed — they contain student data
+# ─────────────────────────────────────────
+*.pdf
+exports/
+generated-reports/
+pdf-output/
+
+
+# ─────────────────────────────────────────
+#  🗄️ SUPABASE CLI
+#  If any team member runs `supabase` CLI
+#  locally for migrations or DB inspection
+# ─────────────────────────────────────────
+.supabase/
+supabase/.branches/
+supabase/.temp/
+
+
+# ─────────────────────────────────────────
+#  🧪 TESTING
+#  Vitest (Vite's test runner), Jest,
+#  Playwright (E2E), coverage reports
+# ─────────────────────────────────────────
+coverage/
+*.lcov
+.nyc_output/
+test-results/
+playwright-report/
+playwright/.cache/
+.jest-cache/
+.vitest-cache/
+vitest.results.json
+
+
+# ─────────────────────────────────────────
+#  🔍 LINTING & FORMATTING CACHE
+#  ESLint and Prettier generate local
+#  cache files — should not be committed
+# ─────────────────────────────────────────
+.eslintcache
+.prettiercache
+.stylelintcache
+
+
+# ─────────────────────────────────────────
+#  📋 RUNTIME LOGS
+# ─────────────────────────────────────────
+logs/
+*.log
+backend/logs/
+client/logs/
+
+
+# ─────────────────────────────────────────
+#  ☁️  DEPLOYMENT PLATFORMS
+#  Vercel (frontend), Render (backend),
+#  Railway (backup — listed in PRD)
+#  Config files are kept; secret/cache
+#  folders are ignored
+# ─────────────────────────────────────────
+# Vercel
+.vercel/
+
+# Render
+.render/
+
+# Railway
+.railway/
+# Note: railway.toml and render.yaml are safe to commit
+# (they contain config, not secrets)
+
+
+# ─────────────────────────────────────────
+#  💻 OPERATING SYSTEM
+# ─────────────────────────────────────────
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+*~
+.directory
+
+
+# ─────────────────────────────────────────
+#  🔧 EDITORS & IDEs
+# ─────────────────────────────────────────
+# VS Code — ignore workspace cache/history,
+# but KEEP extensions.json and settings.json
+# so team shares recommended extensions
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+
+# JetBrains (WebStorm, IntelliJ)
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Vim / Neovim
+*.swp
+*.swo
+*.swn
+Session.vim
+.netrwhist
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# Emacs
+\#*\#
+.#*
+
+# Cursor IDE
+.cursor/
+
+
+# ─────────────────────────────────────────
+#  🔷 TYPESCRIPT
+#  Not in current stack but covering build
+#  info files in case any TS is introduced
+# ─────────────────────────────────────────
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+
+# ─────────────────────────────────────────
+#  🗃️ DATABASE / MIGRATIONS (local)
+#  Local SQLite files or migration dumps
+#  that should never be committed
+# ─────────────────────────────────────────
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+database-dumps/
+migration-backups/
+
+
+# ─────────────────────────────────────────
+#  📁 TEMP & MISC
+# ─────────────────────────────────────────
+tmp/
+temp/
+.tmp/
+.temp/
+.cache/
+.parcel-cache/
+*.tgz
+*.tar.gz
+*.zip
+
+# Backup files that might contain sensitive data
+*.bak
+*.backup
+*.old
+*.orig
