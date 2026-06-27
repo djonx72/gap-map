@@ -1,0 +1,37 @@
+{
+  "name": "gap-map-backend",
+  "version": "1.0.0",
+  "description": "The full backend architecture of gapmap",
+  "keywords": [
+    "Gapmap",
+    "Backend",
+    "Node",
+    "AI"
+  ],
+  "homepage": "https://github.com/djonx72/gap-map#readme",
+  "bugs": {
+    "url": "https://github.com/djonx72/gap-map/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/djonx72/gap-map.git"
+  },
+  "license": "ISC",
+  "author": "De Jon X",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.108.2",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
