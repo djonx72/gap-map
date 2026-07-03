@@ -67,6 +67,17 @@ async function analyzeAnswer(input) {
     student_answer,
     question_type,
   } = input;
+  // Guard: handle empty or blank student answers
+  if (!student_answer || student_answer.trim() === '') {
+    return {
+      submission_id,
+      is_correct: false,
+      root_gap: 'No answer submitted',
+      explanation: 'It looks like you did not submit an answer. Give it a try — there are no wrong attempts!',
+      teacher_report: 'Student submitted a blank answer. No diagnostic possible. Follow up to check if there was a technical issue or if the student chose not to attempt the question.',
+      confidence_score: 1.00
+    };
+  }
 
   const userMessage = `subject: ${subject}
 topic: ${topic}
