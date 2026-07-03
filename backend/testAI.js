@@ -1,5 +1,6 @@
 import * as dotenv from 'dotenv';
 dotenv.config();
+console.log('Key loaded:', process.env.GEMINI_API_KEY ? `${process.env.GEMINI_API_KEY.slice(0, 6)}...${process.env.GEMINI_API_KEY.slice(-4)}` : 'MISSING');
 import { analyzeAnswer } from './services/aiService.js';
 
 const result = await analyzeAnswer({
