@@ -9,7 +9,7 @@ const result = await analyzeAnswer({
   difficulty: 'easy',
   question: 'Identify the verb in this sentence: "The dog quickly ran across the yard."',
   correct_answer: 'ran',
-  student_answer: 'quickly',
+  student_answer: '',
   question_type: 'short'
 });
 console.log(JSON.stringify(result, null, 2));
