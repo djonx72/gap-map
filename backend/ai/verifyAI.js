@@ -1,14 +1,13 @@
-// verifyAI.js
-// Runs Elvis's 3 official test cases (from his AI Engine Brief) against aiService.js
+// backend/ai/verifyAI.js
+// Runs Elvis's official test cases (from his AI Engine Brief) against analyseAnswer.js
 // and validates the response against the ai_analyses data contract.
 //
-// Usage: node verifyAI.js
-// Requires: GEMINI_API_KEY in your .env file, and this file placed next to
-// services/aiService.js (or adjust the import path below).
+// Usage: node ai/verifyAI.js (run from inside the backend folder)
+// Requires: GEMINI_API_KEY in your .env file.
 
 import * as dotenv from 'dotenv';
 dotenv.config();
-import { analyzeAnswer } from './services/aiService.js';
+import { analyseAnswer } from './analyseAnswer.js';
 
 const testCases = [
   {
@@ -127,7 +126,7 @@ async function run() {
 async function runOne(tc, onPass) {
   console.log(`\n=== ${tc.name} ===`);
   try {
-    const result = await analyzeAnswer(tc.input);
+    const result = await analyseAnswer(tc.input);
     console.log(JSON.stringify(result, null, 2));
 
     const schemaErrors = validateSchema(result);
@@ -154,7 +153,7 @@ async function runOne(tc, onPass) {
       allErrors.forEach((e) => console.log('   - ' + e));
     }
   } catch (err) {
-    console.log('❌ ERROR calling analyzeAnswer:', err.message);
+    console.log('❌ ERROR calling analyseAnswer:', err.message);
   }
 }
 

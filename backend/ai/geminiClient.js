@@ -31,14 +31,28 @@ async function callGemini(systemPrompt, userMessage) {
     }
   };
 
-  const response = await fetch(
-    `${GEMINI_URL}?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody)
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+
+  let response;
+  try {
+    response = await fetch(
+      `${GEMINI_URL}?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal
+      }
+    );
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      throw new Error('Gemini API request timed out after 15 seconds');
     }
-  );
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (!response.ok) {
     const error = await response.text();
