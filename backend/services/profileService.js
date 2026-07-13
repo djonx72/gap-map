@@ -15,6 +15,7 @@ export const createProfile = async ({ id, full_name, role, school_name }) => {
     .single();
 
   if (error) {
+    console.error('Supabase error inserting profile:', error);
     const err = new Error('Failed to create profile');
     err.statusCode = 500;
     throw err;
