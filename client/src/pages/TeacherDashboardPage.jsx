@@ -1,36 +1,32 @@
 /**
- * TeacherDashboardPage — placeholder dashboard for teachers.
+ * TeacherDashboardPage — dashboard for teachers.
  *
  * Displays:
  *  - DashboardNav with teacher name, role badge, and logout
  *  - Welcome heading using the teacher's name and school
  *  - EmptyState panel for the upcoming classes list
  *
- * All user data below is HARDCODED for visual placeholder purposes.
- * TODO: Replace PLACEHOLDER_TEACHER with real user data from the auth session/context.
- *       Replace logout navigation with real session termination logic.
+ * Real user data comes from AuthContext's profile (fetched from the profiles table).
+ * ProtectedRoute ensures this page is only reachable by authenticated teachers.
  */
 import { useNavigate } from 'react-router-dom'
 import { LayoutGrid } from 'lucide-react'
 import DashboardNav from '../components/dashboard/DashboardNav.jsx'
 import EmptyState from '../components/dashboard/EmptyState.jsx'
-
-// TODO: Remove this hardcoded placeholder and supply real data from auth context.
-const PLACEHOLDER_TEACHER = {
-  name: 'Ms. Amara Osei',
-  school: 'Westfield Academy',
-  role: 'teacher',
-}
+import { useAuth } from '../context/AuthContext.jsx'
 
 export default function TeacherDashboardPage() {
   const navigate = useNavigate()
+  const { profile, logout } = useAuth()
 
-  // TODO: Replace with real logout — clear session/token, then redirect.
-  function handleLogout() {
-    navigate('/login')
+  async function handleLogout() {
+    await logout()
+    navigate('/login', { replace: true })
   }
 
-  const { name, school, role } = PLACEHOLDER_TEACHER
+  const name   = profile?.full_name  ?? ''
+  const school = profile?.school_name ?? ''
+  const role   = profile?.role        ?? 'teacher'
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#F6F5F1' }}>

@@ -6,11 +6,6 @@
  *             "Create account" CTA.
  * Right (45%): SignaturePanel (shared with Login).
  * Mobile: Signature collapses to slim top band.
- *
- * Form submission: placeholder only — no real auth.
- * TODO: Replace the handleSubmit body with a real API call.
- *       On success, redirect to '/teacher-dashboard' or '/student-dashboard'
- *       based on the chosen role.
  */
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -20,9 +15,13 @@ import RoleToggle from '../components/auth/RoleToggle.jsx'
 import FormField from '../components/auth/FormField.jsx'
 import AuthButton from '../components/auth/AuthButton.jsx'
 import GapMapLogo from '../components/common/GapMapLogo.jsx'
+import supabase from '../lib/supabaseClient.js'
+import { createProfile } from '../services/authApi.js'
+import { useAuth } from '../context/AuthContext.jsx'
 
 export default function SignupPage() {
   const navigate = useNavigate()
+  const { reloadProfile } = useAuth()
 
   const [fullName, setFullName]     = useState('')
   const [email, setEmail]           = useState('')
@@ -34,6 +33,7 @@ export default function SignupPage() {
   const [loading, setLoading]       = useState(false)
   const [success, setSuccess]       = useState(false)
   const [errors, setErrors]         = useState({})
+  const [formError, setFormError]   = useState('')
 
   function validate() {
     const errs = {}
@@ -53,17 +53,62 @@ export default function SignupPage() {
       return
     }
     setErrors({})
+    setFormError('')
     setLoading(true)
 
-    // TODO: Replace this block with a real account-creation API call.
-    // Pass { fullName, email, password, role, schoolName (teacher) / classCode (student) }
-    // to the backend. On success, redirect to the appropriate dashboard.
-    await new Promise(r => setTimeout(r, 1600))
+    // Step 1: Create the Supabase auth account.
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+    })
 
+    if (signUpError) {
+      setFormError(signUpError.message)
+      setLoading(false)
+      return
+    }
+
+    // Step 2: Extract credentials from the just-completed signUp session.
+    // If the Supabase project requires email confirmation, session will be null here —
+    // the user must confirm their email before a token can be issued.
+    const accessToken = signUpData.session?.access_token
+    const userId = signUpData.user?.id
+
+    if (!accessToken || !userId) {
+      // Email confirmation is ON in Supabase — no session is returned until the user
+      // clicks the confirmation link. Surface a clear message instead of a silent 401.
+      setFormError(
+        'Please check your inbox and confirm your email address. ' +
+        'Once confirmed, log in to complete your account setup.'
+      )
+      setLoading(false)
+      return
+    }
+
+    // Step 3: Create the profile row via the backend.
+    try {
+      await createProfile({
+        accessToken,
+        id: userId,
+        full_name: fullName,
+        role,
+        school_name: role === 'teacher' ? schoolName : undefined,
+        class_code: role === 'student' ? classCode : undefined,
+      })
+    } catch (profileError) {
+      setFormError(profileError.message)
+      setLoading(false)
+      return
+    }
+
+    // Step 4: All done — show success state, reload profile, then navigate.
+    // We MUST reload the profile here because onAuthStateChange fired instantly
+    // after signUp() before this backend call finished, meaning AuthContext 
+    // currently thinks this user has no profile row.
+    await reloadProfile()
+    
     setLoading(false)
     setSuccess(true)
-
-    // Placeholder: redirect after a brief success moment
     await new Promise(r => setTimeout(r, 900))
     navigate(role === 'teacher' ? '/teacher-dashboard' : '/student-dashboard')
   }
@@ -105,6 +150,17 @@ export default function SignupPage() {
                 Create your GapMap account as a teacher or a student.
               </p>
             </div>
+
+            {/* Form-level error (Supabase or backend) */}
+            {formError && (
+              <div
+                role="alert"
+                className="mb-5 px-4 py-3 rounded-lg text-sm"
+                style={{ backgroundColor: '#FDF0EF', color: '#c0392b', border: '1px solid #f5c6c3' }}
+              >
+                {formError}
+              </div>
+            )}
 
             {/* Success state */}
             {success && (
