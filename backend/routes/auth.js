@@ -1,6 +1,8 @@
 import express from 'express';
 import { verifyToken } from '../middleware/verifyToken.js';
-import { createProfileLimiter } from '../middleware/rateLimiter.js';
+// Rate limiting for /auth/* is applied at the path level in index.js via authLimiter.
+// Do NOT import or re-apply a per-route limiter here — that would stack two
+// differently-configured limiters on the same request and double-count hits.
 import * as authController from '../controllers/authController.js';
 
 const router = express.Router();
@@ -105,7 +107,7 @@ const router = express.Router();
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
- *             example: { "error": "Too many attempts, please try again later." }
+ *             example: { "error": "Too many login or sign-up attempts from this IP. Please wait 15 minutes before trying again." }
  *       500:
  *         description: Unexpected server or database error.
  *         content:
@@ -113,6 +115,6 @@ const router = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/create-profile', verifyToken, createProfileLimiter, authController.createProfile);
+router.post('/create-profile', verifyToken, authController.createProfile);
 
 export default router;
