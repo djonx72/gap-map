@@ -15,12 +15,24 @@ const PORT = process.env.PORT || 5000;
 // helmet sets X-Frame-Options, X-Content-Type-Options, Strict-Transport-Security,
 // Content-Security-Policy, Referrer-Policy, and several others by default.
 // Do NOT move this below any route or response-producing middleware.
-// Defaults are intentionally kept; see GapMap_Security_Patch_Brief_v1.0.
 //
-// NOTE: helmet's default CSP is restrictive. If a legitimate client origin is
-// blocked during testing (e.g. Swagger UI inline scripts), flag it specifically
-// rather than silently loosening the policy.
-app.use(helmet());
+// CSP note: swagger-ui-express serves its own bundled assets (no external CDN)
+// but requires 'unsafe-inline' for its inline scripts and styles to render.
+// Only scriptSrc and styleSrc are relaxed from the default — every other
+// directive and all other helmet modules remain at their secure defaults.
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        // swagger-ui-express injects inline <script> blocks — required for the UI to boot.
+        'script-src': ["'self'", "'unsafe-inline'"],
+        // swagger-ui-express injects inline <style> blocks for layout/theming.
+        'style-src': ["'self'", 'https:', "'unsafe-inline'"],
+      },
+    },
+  })
+);
 
 // ── Core middleware ────────────────────────────────────────────────────────────
 app.use(cors({
