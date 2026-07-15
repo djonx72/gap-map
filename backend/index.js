@@ -1,6 +1,7 @@
 import './config/env.js';
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 
 import logger from './middleware/logger.js';
 import { applySwagger } from './config/swagger.js';
@@ -9,6 +10,17 @@ import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// ── Security headers (must be first) ──────────────────────────────────────────
+// helmet sets X-Frame-Options, X-Content-Type-Options, Strict-Transport-Security,
+// Content-Security-Policy, Referrer-Policy, and several others by default.
+// Do NOT move this below any route or response-producing middleware.
+// Defaults are intentionally kept; see GapMap_Security_Patch_Brief_v1.0.
+//
+// NOTE: helmet's default CSP is restrictive. If a legitimate client origin is
+// blocked during testing (e.g. Swagger UI inline scripts), flag it specifically
+// rather than silently loosening the policy.
+app.use(helmet());
 
 // ── Core middleware ────────────────────────────────────────────────────────────
 app.use(cors({
