@@ -1,35 +1,31 @@
 /**
- * StudentDashboardPage — placeholder dashboard for students.
+ * StudentDashboardPage — dashboard for students.
  *
  * Displays:
  *  - DashboardNav with student name, role badge, and logout
  *  - Welcome heading using the student's name
  *  - EmptyState panel for the upcoming enrolled-classes list
  *
- * All user data below is HARDCODED for visual placeholder purposes.
- * TODO: Replace PLACEHOLDER_STUDENT with real user data from the auth session/context.
- *       Replace logout navigation with real session termination logic.
+ * Real user data comes from AuthContext's profile (fetched from the profiles table).
+ * ProtectedRoute ensures this page is only reachable by authenticated students.
  */
 import { useNavigate } from 'react-router-dom'
 import { BookOpen } from 'lucide-react'
 import DashboardNav from '../components/dashboard/DashboardNav.jsx'
 import EmptyState from '../components/dashboard/EmptyState.jsx'
-
-// TODO: Remove this hardcoded placeholder and supply real data from auth context.
-const PLACEHOLDER_STUDENT = {
-  name: 'Kofi Mensah',
-  role: 'student',
-}
+import { useAuth } from '../context/AuthContext.jsx'
 
 export default function StudentDashboardPage() {
   const navigate = useNavigate()
+  const { profile, logout } = useAuth()
 
-  // TODO: Replace with real logout — clear session/token, then redirect.
-  function handleLogout() {
-    navigate('/login')
+  async function handleLogout() {
+    await logout()
+    navigate('/login', { replace: true })
   }
 
-  const { name, role } = PLACEHOLDER_STUDENT
+  const name = profile?.full_name ?? ''
+  const role = profile?.role      ?? 'student'
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#F6F5F1' }}>

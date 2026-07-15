@@ -4,27 +4,39 @@
  * Left (55%): email + password form with "Log in" CTA.
  * Right (45%): SignaturePanel (shared with Signup).
  * Mobile: Signature collapses to a slim top band; form is the focus.
- *
- * Form submission: placeholder only — no real auth.
- * On "success", navigates to the relevant dashboard based on a hardcoded role.
- * TODO: Replace the handleSubmit body with a real API call and route based on returned user role.
  */
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import SignaturePanel from '../components/auth/SignaturePanel.jsx'
 import FormField from '../components/auth/FormField.jsx'
 import AuthButton from '../components/auth/AuthButton.jsx'
 import GapMapLogo from '../components/common/GapMapLogo.jsx'
+import supabase from '../lib/supabaseClient.js'
+import { useAuth } from '../context/AuthContext.jsx'
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const { profile } = useAuth()
 
-  const [email, setEmail]       = useState('')
-  const [password, setPassword] = useState('')
-  const [showPw, setShowPw]     = useState(false)
-  const [loading, setLoading]   = useState(false)
-  const [error, setError]       = useState('')
+  const [email, setEmail]           = useState('')
+  const [password, setPassword]     = useState('')
+  const [showPw, setShowPw]         = useState(false)
+  const [loading, setLoading]       = useState(false)
+  const [error, setError]           = useState('')
+  // loginSuccess gates the redirect effect so it only fires after a deliberate login,
+  // not on initial mount when a session already exists.
+  const [loginSuccess, setLoginSuccess] = useState(false)
+
+  // Once a login completes and AuthContext has resolved the profile, redirect.
+  useEffect(() => {
+    if (loginSuccess && profile) {
+      navigate(
+        profile.role === 'teacher' ? '/teacher-dashboard' : '/student-dashboard',
+        { replace: true }
+      )
+    }
+  }, [loginSuccess, profile, navigate])
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -38,15 +50,22 @@ export default function LoginPage() {
 
     setLoading(true)
 
-    // TODO: Replace this block with a real authentication API call.
-    // On success, redirect to '/teacher-dashboard' or '/student-dashboard'
-    // based on the role returned by the server.
-    await new Promise(r => setTimeout(r, 1400))
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
 
-    // Placeholder: route to teacher dashboard for any login attempt.
-    // The real implementation will inspect the user's role from the auth response.
-    setLoading(false)
-    navigate('/teacher-dashboard')
+    if (signInError) {
+      // Always show a generic message — never reveal whether the email exists.
+      setError('Invalid email or password.')
+      setLoading(false)
+      return
+    }
+
+    // signIn succeeded. onAuthStateChange in AuthContext will fire and populate
+    // profile. The useEffect above will redirect once profile is ready.
+    setLoginSuccess(true)
+    // Keep loading=true while waiting for the profile redirect to complete.
   }
 
   return (
