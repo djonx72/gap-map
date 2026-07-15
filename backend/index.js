@@ -39,6 +39,33 @@ app.use(
   })
 );
 
+// ── Permissions-Policy ────────────────────────────────────────────────────────
+// helmet v8 does not ship a built-in permissionsPolicy middleware, so we set
+// the header manually. This disables all browser feature APIs that a pure JSON
+// backend API has no use for, and is the only header preventing an A+ score on
+// securityheaders.com (it caps the score at A when absent).
+app.use((_req, res, next) => {
+  res.setHeader(
+    'Permissions-Policy',
+    [
+      'camera=()',
+      'microphone=()',
+      'geolocation=()',
+      'accelerometer=()',
+      'gyroscope=()',
+      'magnetometer=()',
+      'payment=()',
+      'usb=()',
+      'fullscreen=()',
+      'picture-in-picture=()',
+      'display-capture=()',
+      'interest-cohort=()',
+    ].join(', ')
+  );
+  next();
+});
+
+
 // ── Core middleware ────────────────────────────────────────────────────────────
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
