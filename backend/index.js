@@ -112,7 +112,16 @@ app.use(logger);
 // ── Swagger UI + JSON spec ─────────────────────────────────────────────────────
 // Interactive docs: http://localhost:5000/api-docs
 // Raw spec JSON:    http://localhost:5000/api-docs.json
-applySwagger(app);
+if (process.env.NODE_ENV === 'production') {
+  // Explicitly return 404 in production so the route doesn't just fall through
+  // to a generic handler, but actively refuses access.
+  const blockSwagger = (_req, res) => res.status(404).json({ error: 'Not found' });
+  app.get('/api-docs', blockSwagger);
+  app.get('/api-docs.json', blockSwagger);
+} else {
+  console.log('📖  Swagger API docs enabled (development mode)');
+  applySwagger(app);
+}
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/', (_req, res) => {
