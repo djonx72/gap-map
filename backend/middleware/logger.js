@@ -10,14 +10,33 @@
  */
 import morgan from 'morgan';
 
-// ── Custom token: JSON body (passwords redacted) ──────────────────────────────
+// ── Custom token: JSON body (sensitive fields redacted) ───────────────────────
+const sensitiveFields = [
+  'password',
+  'new_password',
+  'token',
+  'api_key',
+  'email',
+  'student_answer',
+  'answer_content',
+  'correct_answer',
+  'content',
+  'teacher_report',
+  'explanation',
+  'root_gap',
+];
+
 morgan.token('body', (req) => {
   if (!req.body || Object.keys(req.body).length === 0) return '-';
 
-  // Never log passwords in any form
   const safe = { ...req.body };
-  if (safe.password)     safe.password     = '[REDACTED]';
-  if (safe.new_password) safe.new_password = '[REDACTED]';
+  
+  // Scrub all sensitive fields from the log output (does not alter req.body)
+  for (const field of sensitiveFields) {
+    if (safe[field] !== undefined) {
+      safe[field] = '[REDACTED]';
+    }
+  }
 
   return JSON.stringify(safe);
 });

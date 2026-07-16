@@ -66,13 +66,42 @@ app.use((_req, res, next) => {
 });
 
 
-// ── Core middleware ────────────────────────────────────────────────────────────
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production'
-    ? process.env.FRONTEND_URL // Must be set in your production environment!
-    : ['http://localhost:5173', 'http://localhost:3000'],
-  credentials: true
-}));
+// ── CORS ─────────────────────────────────────────────────────────────────────
+// Explicit whitelist: the deployed frontend URL (required at startup via env.js)
+// plus the two local dev origins. Any undefined/falsy entry is filtered out so
+// a missing env var never silently becomes a wildcard.
+//
+// Origin-function behaviour:
+//   • No Origin header (Postman, server-to-server, mobile) → allowed through.
+//   • Origin in the whitelist → allowed.
+//   • Anything else → rejected with a CORS error; the blocked origin is logged
+//     with console.warn so it's visible in Render's log stream / monitoring.
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:5173',
+  'http://localhost:3000',
+].filter(Boolean); // strips any undefined/null/empty entries
+
+app.use(
+  cors({
+    origin(requestOrigin, callback) {
+      // Allow requests with no Origin header (non-browser clients).
+      if (!requestOrigin) return callback(null, true);
+
+      if (allowedOrigins.includes(requestOrigin)) {
+        return callback(null, true);
+      }
+
+      // Reject and log — never silently pass an unknown origin.
+      console.warn(
+        `[CORS] Blocked request from unlisted origin: "${requestOrigin}". ` +
+        `Allowed origins: ${allowedOrigins.join(', ')}`
+      );
+      return callback(new Error(`CORS: origin "${requestOrigin}" is not allowed.`));
+    },
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 // ── Request / response logging ────────────────────────────────────────────────
@@ -83,7 +112,16 @@ app.use(logger);
 // ── Swagger UI + JSON spec ─────────────────────────────────────────────────────
 // Interactive docs: http://localhost:5000/api-docs
 // Raw spec JSON:    http://localhost:5000/api-docs.json
-applySwagger(app);
+if (process.env.NODE_ENV === 'production') {
+  // Explicitly return 404 in production so the route doesn't just fall through
+  // to a generic handler, but actively refuses access.
+  const blockSwagger = (_req, res) => res.status(404).json({ error: 'Not found' });
+  app.get('/api-docs', blockSwagger);
+  app.get('/api-docs.json', blockSwagger);
+} else {
+  console.log('📖  Swagger API docs enabled (development mode)');
+  applySwagger(app);
+}
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/', (_req, res) => {
