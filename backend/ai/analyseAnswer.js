@@ -61,7 +61,7 @@ async function analyseAnswer(submission) {
       is_correct:       false,
       root_gap:         'Unable to diagnose — AI engine error',
       explanation:      'We could not analyse your answer right now. Your teacher has been notified.',
-      teacher_report:   `AI engine failed to analyse this submission. Error: ${err.message}`,
+      teacher_report:   `AI engine failed to analyse this submission. Error: please try again or contact support.`,
       confidence_score: 0.00
     };
   }
