@@ -16,6 +16,11 @@ import {
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Tell Express it is sitting behind a reverse proxy (Render).
+// Without this, express-rate-limit throws ERR_ERL_UNEXPECTED_X_FORWARDED_FOR
+// and all users share the same rate-limit bucket (the proxy's IP).
+app.set('trust proxy', 1);
+
 // ── Security headers (must be first) ──────────────────────────────────────────
 // helmet sets X-Frame-Options, X-Content-Type-Options, Strict-Transport-Security,
 // Content-Security-Policy, Referrer-Policy, and several others by default.
