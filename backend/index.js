@@ -30,17 +30,26 @@ app.set('trust proxy', 1);
 // but requires 'unsafe-inline' for its inline scripts and styles to render.
 // Only scriptSrc and styleSrc are relaxed from the default — every other
 // directive and all other helmet modules remain at their secure defaults.
+const isProduction = process.env.NODE_ENV === 'production';
+
 app.use(
   helmet({
     contentSecurityPolicy: {
       directives: {
-        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-        // swagger-ui-express injects inline <script> blocks — required for the UI to boot.
-        'script-src': ["'self'", "'unsafe-inline'"],
-        // swagger-ui-express injects inline <style> blocks for layout/theming.
-        'style-src': ["'self'", 'https:', "'unsafe-inline'"],
+        defaultSrc: ["'self'"],
+        scriptSrc: isProduction 
+          ? ["'self'"] 
+          : ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        styleSrc: isProduction 
+          ? ["'self'"] 
+          : ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", 'data:', 'https:'],
+        connectSrc: ["'self'", process.env.SUPABASE_URL, 'https://generativelanguage.googleapis.com'],
+        frameSrc: ["'none'"],
+        objectSrc: ["'none'"],
       },
     },
+    crossOriginEmbedderPolicy: false,
   })
 );
 
