@@ -53,7 +53,8 @@ const testCases = [
       question:       'What is 1/2 + 1/4?',
       correct_answer: '3/4',
       student_answer: '2/6',
-      question_type:  'mcq'
+      question_type:  'mcq',
+      options:['2/6', '3/4', '2/4', '1/2']
     }
   },
   {

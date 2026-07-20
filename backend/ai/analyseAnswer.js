@@ -1,5 +1,5 @@
 // backend/ai/analyseAnswer.js
-// Main AI engine function — Jonathan calls this
+// Main AI engine function — Jonathan calls this from his submissions route
 
 import { buildPrompt }   from './buildPrompt.js';
 import { callGemini }    from './geminiClient.js';
@@ -13,19 +13,40 @@ import { parseResponse } from './parseResponse.js';
  * @param {string} submission.topic          - e.g. 'Linear Equations'
  * @param {string} submission.difficulty     - 'easy' | 'medium' | 'hard'
  * @param {string} submission.question       - Full question text
- * @param {string} submission.correct_answer - Teacher's correct answer
+ * @param {string} submission.correct_answer - Teacher's correct answer / model answer
  * @param {string} submission.student_answer - What the student wrote
- * @param {string} submission.question_type  - 'mcq'|'short'|'long'|'math'
+ * @param {string} submission.question_type  - 'mcq' | 'short' | 'long' | 'math'
+ * @param {Array}  submission.options        - MCQ only: array of 4 option strings [A, B, C, D]
  *
  * @returns {Object} { is_correct, root_gap, explanation, teacher_report, confidence_score }
  */
 async function analyseAnswer(submission) {
-  // Validate input fields
+  const VALID_TYPES = ['mcq', 'short', 'long', 'math'];
+  const VALID_DIFFICULTIES = ['easy', 'medium', 'hard'];
+
+  // Validate required fields
   const required = ['subject', 'topic', 'difficulty', 'question',
                     'correct_answer', 'student_answer', 'question_type'];
   for (const field of required) {
-    if (!submission[field] && submission[field] !== '') {
+    if (submission[field] === undefined || submission[field] === null) {
       throw new Error(`Missing required field: ${field}`);
+    }
+  }
+
+  // Validate question type
+  if (!VALID_TYPES.includes(submission.question_type)) {
+    throw new Error(`Invalid question_type: ${submission.question_type}`);
+  }
+
+  // Validate difficulty
+  if (!VALID_DIFFICULTIES.includes(submission.difficulty)) {
+    throw new Error(`Invalid difficulty: ${submission.difficulty}`);
+  }
+
+  // MCQ must have exactly 4 options
+  if (submission.question_type === 'mcq') {
+    if (!Array.isArray(submission.options) || submission.options.length !== 4) {
+      throw new Error('MCQ submissions must include exactly 4 options');
     }
   }
 
@@ -41,7 +62,7 @@ async function analyseAnswer(submission) {
   }
 
   try {
-    // Step 1: Build the prompt
+    // Step 1: Build the prompt (type-aware)
     const { systemPrompt, userMessage } = buildPrompt(submission);
 
     // Step 2: Call Gemini
@@ -53,15 +74,14 @@ async function analyseAnswer(submission) {
     return result;
 
   } catch (err) {
-    // Log the error for debugging but return a safe fallback
-    console.error('AI Engine Error:', err.message);
+    // Log full error internally — never expose to frontend
+    console.error('[AI Engine] Error analysing submission:', err.message);
 
-    // Return a fallback so the app never crashes
     return {
       is_correct:       false,
       root_gap:         'Unable to diagnose — AI engine error',
       explanation:      'We could not analyse your answer right now. Your teacher has been notified.',
-      teacher_report:   `AI engine failed to analyse this submission. Error: please try again or contact support.`,
+      teacher_report:   'AI engine failed to analyse this submission. Please try again or contact support.',
       confidence_score: 0.00
     };
   }
