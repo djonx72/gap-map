@@ -12,6 +12,8 @@ import {
   authLimiter,
   aiLimiter,
 } from './middleware/rateLimiter.js';
+import classRoutes from './routes/classes.js';
+import questionRoutes from './routes/questions.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -153,6 +155,9 @@ app.use(generalLimiter);
 // that Chunk 2 applied directly on /auth/create-profile. That route-level import
 // has been removed from routes/auth.js to prevent double-counting.
 app.use('/auth', authLimiter, authRoutes);
+
+app.use('/classes', classRoutes);
+app.use('/questions', questionRoutes);
 
 // aiLimiter is pre-wired to /submissions now so the protection is already in
 // place the moment the submission routes are added in a later chunk.
