@@ -9,6 +9,7 @@ import { parseResponse } from './parseResponse.js';
  * Analyses a student's answer and returns a diagnostic result.
  *
  * @param {Object} submission
+ * @param {string} [submission.submission_id] - UUID of the submission (optional; passed through untouched if provided, so Jonathan can save the result straight to ai_analyses without re-merging it himself)
  * @param {string} submission.subject        - e.g. 'Mathematics'
  * @param {string} submission.topic          - e.g. 'Linear Equations'
  * @param {string} submission.difficulty     - 'easy' | 'medium' | 'hard'
@@ -18,7 +19,7 @@ import { parseResponse } from './parseResponse.js';
  * @param {string} submission.question_type  - 'mcq' | 'short' | 'long' | 'math'
  * @param {Array}  submission.options        - MCQ only: array of 4 option strings [A, B, C, D]
  *
- * @returns {Object} { is_correct, root_gap, explanation, teacher_report, confidence_score }
+ * @returns {Object} { submission_id, is_correct, root_gap, explanation, teacher_report, confidence_score }
  */
 async function analyseAnswer(submission) {
   const VALID_TYPES = ['mcq', 'short', 'long', 'math'];
@@ -53,6 +54,7 @@ async function analyseAnswer(submission) {
   // Guard: handle empty or blank student answers before hitting the API
   if (!submission.student_answer || submission.student_answer.trim() === '') {
     return {
+      submission_id,
       is_correct:       false,
       root_gap:         'No answer submitted',
       explanation:      'It looks like you did not submit an answer. Give it a try — there are no wrong attempts!',
@@ -71,13 +73,14 @@ async function analyseAnswer(submission) {
     // Step 3: Parse and validate the response
     const result = parseResponse(rawResponse);
 
-    return result;
+    return { submission_id, ...result };
 
   } catch (err) {
     // Log full error internally — never expose to frontend
     console.error('[AI Engine] Error analysing submission:', err.message);
 
     return {
+      submission_id,
       is_correct:       false,
       root_gap:         'Unable to diagnose — AI engine error',
       explanation:      'We could not analyse your answer right now. Your teacher has been notified.',
