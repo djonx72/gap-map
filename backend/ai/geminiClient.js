@@ -56,7 +56,7 @@ async function callGemini(systemPrompt, userMessage) {
 
   if (!response.ok) {
     const error = await response.text();
-    throw new Error(`Gemini API error: ${response.status} — ${error}`);
+throw new Error(`Gemini API error: ${response.status}`);
   }
 
   const data = await response.json();
