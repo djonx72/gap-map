@@ -16,15 +16,15 @@
  * app, and emit standard RateLimit-* headers (RFC-compliant) with legacy
  * X-RateLimit-* headers disabled.
  */
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 
-const keyByUserOrIp = (req) => {
+const keyByUserOrIp = (req, res) => {
   // Prefer the authenticated user's ID so students/teachers sharing a
   // network (e.g. a school computer lab) aren't rate-limited together.
   // Falls back to IP only in the unexpected case req.user isn't set —
   // this should never happen in practice since both limiters below are
   // only ever applied after verifyToken has already run.
-  return req.user?.id || req.ip;
+  return req.user?.id || ipKeyGenerator(req, res);
 };
 
 // ── General — 200 req / 15 min / IP ──────────────────────────────────────────
