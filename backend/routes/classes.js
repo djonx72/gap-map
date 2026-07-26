@@ -7,6 +7,7 @@ const router = express.Router();
 
 router.use(verifyToken);
 
+router.post('/join', writeLimiter, classController.joinClass);
 router.post('/', writeLimiter, classController.createClass);
 router.get('/', classController.listClasses);
 router.get('/:id', classController.getClass);

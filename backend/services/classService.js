@@ -132,3 +132,51 @@ export const getClassById = async (classId, teacherId) => {
 
   return data;
 };
+
+export const findClassByCode = async (code) => {
+  const normalizedCode = code.toUpperCase().trim();
+
+  const { data, error } = await supabaseAdmin
+    .from('classes')
+    .select('*')
+    .eq('class_code', normalizedCode)
+    .maybeSingle();
+
+  if (error) {
+    const err = new Error(`DB query failed in findClassByCode: ${error.message}`);
+    err.statusCode = 500;
+    err.publicMessage = 'Unable to verify the class code right now. Please try again.';
+    throw err;
+  }
+
+  return data;
+};
+
+export const enrollStudent = async ({ classId, studentId }) => {
+  const { data, error } = await supabaseAdmin
+    .from('class_enrollments')
+    .insert([
+      {
+        class_id: classId,
+        student_id: studentId
+      }
+    ])
+    .select()
+    .single();
+
+  if (error) {
+    if (error.code === '23505') {
+      const err = new Error('Unique constraint violation in enrollStudent');
+      err.statusCode = 409;
+      err.publicMessage = 'You are already enrolled in this class.';
+      throw err;
+    }
+    const err = new Error(`DB insert failed in enrollStudent: ${error.message}`);
+    err.statusCode = 500;
+    err.publicMessage = 'We could not enrol you in that class. Please try again.';
+    throw err;
+  }
+
+  return data;
+};
+

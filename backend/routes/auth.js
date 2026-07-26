@@ -52,14 +52,10 @@ const router = express.Router();
  *                 enum: [teacher, student]
  *                 description: Account role — determines which fields are required.
  *                 example: "teacher"
- *               school_name:
+ *               school_code:
  *                 type: string
- *                 description: Required when role is "teacher".
- *                 example: "Westfield Academy"
- *               class_code:
- *                 type: string
- *                 description: Required when role is "student". Case-insensitive.
- *                 example: "BIO-3A"
+ *                 description: Required for both roles. Links the profile to an existing school.
+ *                 example: "WEST-1A"
  *     responses:
  *       201:
  *         description: Profile created successfully.
@@ -95,12 +91,12 @@ const router = express.Router();
  *               $ref: '#/components/schemas/ErrorResponse'
  *             example: { "error": "You can only create a profile for your own account." }
  *       404:
- *         description: Class code not found (student role only).
+ *         description: School code not found or inactive.
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
- *             example: { "error": "Class code not found. Check with your teacher." }
+ *             example: { "error": "School code not found. Check with your school administrator." }
  *       429:
  *         description: Rate limit exceeded.
  *         content:

@@ -3,9 +3,9 @@ export const validateCreateProfileInput = (body) => {
     return { valid: false, error: 'Missing required fields' };
   }
 
-  const { id, full_name, role } = body;
+  const { id, full_name, role, school_code } = body;
 
-  if (!id || !full_name || !role) {
+  if (!id || !full_name || !role || !school_code || typeof school_code !== 'string' || school_code.trim() === '') {
     return { valid: false, error: 'Missing required fields' };
   }
 
