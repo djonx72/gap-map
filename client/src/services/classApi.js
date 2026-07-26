@@ -84,3 +84,58 @@ export async function getClassById({ accessToken, classId }) {
 
   return data.class
 }
+
+/**
+ * getSchoolClasses — GETs to /classes/school
+ * 
+ * @param {Object} params
+ * @param {string} params.accessToken
+ */
+export async function getSchoolClasses({ accessToken }) {
+  const response = await fetch(
+    `${import.meta.env.VITE_API_BASE_URL}/classes/school`,
+    {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      }
+    }
+  )
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(data?.error ?? 'An unexpected error occurred while fetching school classes.')
+  }
+
+  return data.classes
+}
+
+/**
+ * joinClass — POSTs to /classes/join
+ * 
+ * @param {Object} params
+ * @param {string} params.accessToken
+ * @param {string} params.class_code
+ */
+export async function joinClass({ accessToken, class_code }) {
+  const response = await fetch(
+    `${import.meta.env.VITE_API_BASE_URL}/classes/join`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ class_code }),
+    }
+  )
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(data?.error ?? 'An unexpected error occurred while joining the class.')
+  }
+
+  return data
+}

@@ -22,33 +22,36 @@ export const createProfile = async (req, res, next) => {
     return res.status(400).json({ error: validationResult.error });
   }
 
-  const { id, full_name, role, school_name, class_code } = req.body;
+  const { id, full_name, role, school_code } = req.body;
 
   // Step 2: Identity check — the token's subject must match the supplied id
   if (id !== req.user.id) {
     return res.status(403).json({ error: 'You can only create a profile for your own account.' });
   }
 
-  // Step 3: Create profile
+  // Step 3: Find school by code
+  let foundSchool;
   try {
-    await profileService.createProfile({ id, full_name, role, school_name });
+    foundSchool = await profileService.findSchoolByCode(school_code);
   } catch (err) {
     return next(err);
   }
 
-  // Step 4: Handle student class enrolment
-  if (role === 'student' && class_code) {
-    try {
-      const foundClass = await profileService.findClassByCode(class_code);
-      
-      if (!foundClass) {
-        return res.status(404).json({ error: 'Class code not found. Check with your teacher.' });
-      }
+  if (!foundSchool) {
+    return res.status(404).json({ error: 'School code not found. Check with your school administrator.' });
+  }
 
-      await profileService.enrollStudent({ classId: foundClass.id, studentId: id });
-    } catch (err) {
-      return next(err);
-    }
+  // Step 4: Create profile
+  try {
+    await profileService.createProfile({ 
+      id, 
+      full_name, 
+      role, 
+      school_id: foundSchool.id, 
+      school_name: foundSchool.school_name 
+    });
+  } catch (err) {
+    return next(err);
   }
 
   // Step 5: Success

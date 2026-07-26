@@ -39,8 +39,8 @@ export const generateUniqueClassCode = async () => {
   throw err;
 };
 
-export const createClass = async (teacherId, name, subject) => {
-  if (!name || !subject || !teacherId) {
+export const createClass = async (teacherId, name, subject, schoolId) => {
+  if (!name || !subject || !teacherId || !schoolId) {
     const err = new Error('Validation failed');
     err.statusCode = 400;
     err.publicMessage = 'Missing required fields.';
@@ -56,7 +56,7 @@ export const createClass = async (teacherId, name, subject) => {
     const { data, error } = await supabaseAdmin
       .from('classes')
       .insert([
-        { name: trimmedName, subject: trimmedSubject, teacher_id: teacherId, class_code }
+        { name: trimmedName, subject: trimmedSubject, teacher_id: teacherId, class_code, school_id: schoolId }
       ])
       .select()
       .single();
@@ -100,18 +100,17 @@ export const getTeacherClasses = async (teacherId) => {
   return data || [];
 };
 
-export const getClassById = async (classId, teacherId) => {
-  const { data, error } = await supabaseAdmin
+export const getClassById = async (classId, userId) => {
+  // 1. Fetch the class first
+  const { data: classData, error: classError } = await supabaseAdmin
     .from('classes')
     .select('*')
     .eq('id', classId)
-    .eq('teacher_id', teacherId)
     .single();
 
-  if (error) {
-    // If no row is found, Supabase returns PGRST116.
-    if (error.code !== 'PGRST116') {
-      console.error('[classService.getClassById] DB select error:', error);
+  if (classError || !classData) {
+    if (classError && classError.code !== 'PGRST116') {
+      console.error('[classService.getClassById] DB select error:', classError);
       const err = new Error('Failed to load class.');
       err.statusCode = 500;
       err.publicMessage = 'Failed to load class. Please try again.';
@@ -123,12 +122,154 @@ export const getClassById = async (classId, teacherId) => {
     throw err;
   }
 
-  if (!data) {
+  // 2. If the user is the teacher who created it, grant full access
+  if (classData.teacher_id === userId) {
+    return classData;
+  }
+
+  // 3. Otherwise, check if the user is an enrolled student
+  const { data: enrollmentData, error: enrollmentError } = await supabaseAdmin
+    .from('class_enrollments')
+    .select('id')
+    .eq('class_id', classId)
+    .eq('student_id', userId)
+    .single();
+
+  // If they aren't enrolled (or error), return a 404 (to avoid leaking class existence)
+  if (enrollmentError || !enrollmentData) {
     const err = new Error('Class not found.');
     err.statusCode = 404;
     err.publicMessage = 'Class not found.';
     throw err;
   }
 
+  // 4. Fetch teacher name for the student view
+  const { data: teacherProfile } = await supabaseAdmin
+    .from('profiles')
+    .select('full_name')
+    .eq('id', classData.teacher_id)
+    .single();
+
+  // 5. Return the class data to the student: strip class_code, attach teacher_name
+  const { class_code, ...studentSafeClassData } = classData;
+  return {
+    ...studentSafeClassData,
+    teacher_name: teacherProfile?.full_name ?? 'Unknown Teacher',
+  };
+};
+
+export const findClassByCode = async (code) => {
+  const normalizedCode = code.toUpperCase().trim();
+
+  const { data, error } = await supabaseAdmin
+    .from('classes')
+    .select('*')
+    .eq('class_code', normalizedCode)
+    .maybeSingle();
+
+  if (error) {
+    const err = new Error(`DB query failed in findClassByCode: ${error.message}`);
+    err.statusCode = 500;
+    err.publicMessage = 'Unable to verify the class code right now. Please try again.';
+    throw err;
+  }
+
   return data;
+};
+
+export const enrollStudent = async ({ classId, studentId }) => {
+  const { data, error } = await supabaseAdmin
+    .from('class_enrollments')
+    .insert([
+      {
+        class_id: classId,
+        student_id: studentId
+      }
+    ])
+    .select()
+    .single();
+
+  if (error) {
+    if (error.code === '23505') {
+      const err = new Error('Unique constraint violation in enrollStudent');
+      err.statusCode = 409;
+      err.publicMessage = 'You are already enrolled in this class.';
+      throw err;
+    }
+    const err = new Error(`DB insert failed in enrollStudent: ${error.message}`);
+    err.statusCode = 500;
+    err.publicMessage = 'We could not enrol you in that class. Please try again.';
+    throw err;
+  }
+
+  return data;
+};
+
+export const getSchoolClasses = async (schoolId, studentId) => {
+  // Step A: Query classes for the given school, selecting specific fields (NO class_code)
+  const { data: classesData, error: classesError } = await supabaseAdmin
+    .from('classes')
+    .select('id, name, subject, teacher_id, created_at')
+    .eq('school_id', schoolId)
+    .order('created_at', { ascending: false });
+
+  if (classesError) {
+    console.error('[classService.getSchoolClasses] DB error (classes):', classesError);
+    const err = new Error('Failed to load classes. Please try again.');
+    err.statusCode = 500;
+    err.publicMessage = 'Failed to load classes. Please try again.';
+    throw err;
+  }
+
+  // Step F: Return early if zero classes
+  if (!classesData || classesData.length === 0) {
+    return [];
+  }
+
+  // Step B: Query profiles for the distinct set of teacher_ids
+  const teacherIds = [...new Set(classesData.map(c => c.teacher_id))];
+  const { data: teachersData, error: teachersError } = await supabaseAdmin
+    .from('profiles')
+    .select('id, full_name')
+    .in('id', teacherIds);
+
+  if (teachersError) {
+    console.error('[classService.getSchoolClasses] DB error (profiles):', teachersError);
+    const err = new Error('Failed to load classes. Please try again.');
+    err.statusCode = 500;
+    err.publicMessage = 'Failed to load classes. Please try again.';
+    throw err;
+  }
+
+  const teacherMap = {};
+  teachersData.forEach(t => {
+    teacherMap[t.id] = t.full_name;
+  });
+
+  // Step C: Query class_enrollments for the student's enrollments in these classes
+  const classIds = classesData.map(c => c.id);
+  const { data: enrollmentsData, error: enrollmentsError } = await supabaseAdmin
+    .from('class_enrollments')
+    .select('class_id')
+    .eq('student_id', studentId)
+    .in('class_id', classIds);
+
+  if (enrollmentsError) {
+    console.error('[classService.getSchoolClasses] DB error (enrollments):', enrollmentsError);
+    const err = new Error('Failed to load classes. Please try again.');
+    err.statusCode = 500;
+    err.publicMessage = 'Failed to load classes. Please try again.';
+    throw err;
+  }
+
+  const enrolledClassIds = new Set(enrollmentsData.map(e => e.class_id));
+
+  // Step D: Merge all into final array
+  return classesData.map(c => ({
+    id: c.id,
+    name: c.name,
+    subject: c.subject,
+    teacher_name: teacherMap[c.teacher_id] || 'Unknown Teacher',
+    is_enrolled: enrolledClassIds.has(c.id)
+  }));
 };

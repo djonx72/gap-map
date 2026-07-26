@@ -23,3 +23,19 @@ export const isValidUUID = (value) => {
   const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
   return uuidRegex.test(value);
 };
+
+export const validateJoinClassInput = (body) => {
+  if (!body) return { isValid: false, error: 'Request body is required.' };
+  
+  let { class_code } = body;
+  if (!class_code || typeof class_code !== 'string') {
+    return { isValid: false, error: 'class_code is required and must be a string.' };
+  }
+  
+  class_code = class_code.trim();
+  if (class_code.length === 0) {
+    return { isValid: false, error: 'class_code cannot be empty.' };
+  }
+  
+  return { isValid: true, data: { class_code } };
+};

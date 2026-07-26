@@ -7,7 +7,7 @@ import supabaseAdmin from '../lib/supabaseAdmin.js';
  * central errorHandler can return a safe, user-facing message without leaking
  * internal database detail.
  */
-export const createProfile = async ({ id, full_name, role, school_name }) => {
+export const createProfile = async ({ id, full_name, role, school_id, school_name }) => {
   const { data, error } = await supabaseAdmin
     .from('profiles')
     .insert([
@@ -15,7 +15,8 @@ export const createProfile = async ({ id, full_name, role, school_name }) => {
         id,
         full_name,
         role,
-        school_name: school_name || null
+        school_id,
+        school_name
       }
     ])
     .select()
@@ -36,49 +37,41 @@ export const createProfile = async ({ id, full_name, role, school_name }) => {
 };
 
 /**
- * findClassByCode — looks up a class row by its normalised class code.
+ * findSchoolByCode — looks up a school row by its normalised school code.
  *
- * Returns null (not an error) when the code simply doesn't exist — the
- * controller handles the 404 case directly.  Throws only on a genuine DB error.
+ * Returns null if not found or inactive.
  */
-export const findClassByCode = async (code) => {
+export const findSchoolByCode = async (code) => {
   const normalizedCode = code.toUpperCase().trim();
 
   const { data, error } = await supabaseAdmin
-    .from('classes')
+    .from('schools')
     .select('*')
-    .eq('class_code', normalizedCode)
+    .eq('school_code', normalizedCode)
+    .eq('is_active', true)
     .maybeSingle();
 
   if (error) {
-    const err = new Error(`DB query failed in findClassByCode: ${error.message}`);
+    const err = new Error(`DB query failed in findSchoolByCode: ${error.message}`);
     err.statusCode = 500;
-    err.publicMessage = 'Unable to verify the class code right now. Please try again.';
+    err.publicMessage = 'Unable to verify the school code right now. Please try again.';
     throw err;
   }
 
-  return data; // Returns null if not found thanks to maybeSingle()
+  return data;
 };
 
-/**
- * enrollStudent — inserts a class_enrollments row linking a student to a class.
- */
-export const enrollStudent = async ({ classId, studentId }) => {
+export const getProfileById = async (id) => {
   const { data, error } = await supabaseAdmin
-    .from('class_enrollments')
-    .insert([
-      {
-        class_id: classId,
-        student_id: studentId
-      }
-    ])
-    .select()
-    .single();
+    .from('profiles')
+    .select('id, role, school_id, full_name, school_name')
+    .eq('id', id)
+    .maybeSingle();
 
   if (error) {
-    const err = new Error(`DB insert failed in enrollStudent: ${error.message}`);
+    const err = new Error(`DB query failed in getProfileById: ${error.message}`);
     err.statusCode = 500;
-    err.publicMessage = 'We could not enrol you in that class. Please try again.';
+    err.publicMessage = 'Unable to fetch your profile right now. Please try again.';
     throw err;
   }
 

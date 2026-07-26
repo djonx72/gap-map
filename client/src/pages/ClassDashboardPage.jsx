@@ -1,10 +1,11 @@
 /**
  * ClassDashboardPage — dashboard for a specific class.
- * Shows the class code prominently and a list of questions (the question bank).
+ * Shows the class code and question bank for teachers.
+ * Shows the teacher name and question list for enrolled students.
  */
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, Plus } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import ClassCodeDisplay from '../components/dashboard/ClassCodeDisplay.jsx'
 import QuestionCard from '../components/dashboard/QuestionCard.jsx'
 import EmptyState from '../components/dashboard/EmptyState.jsx'
@@ -12,12 +13,15 @@ import Button from '../components/common/Button.jsx'
 import SkeletonBlock from '../components/common/SkeletonBlock.jsx'
 import ErrorBanner from '../components/common/ErrorBanner.jsx'
 import supabase from '../lib/supabaseClient.js'
+import { useAuth } from '../context/AuthContext.jsx'
 import { getClassById } from '../services/classApi.js'
 import { getClassQuestions } from '../services/questionApi.js'
 
 export default function ClassDashboardPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { profile } = useAuth()
+  const isTeacher = profile?.role === 'teacher'
 
   const [classData, setClassData] = useState(null)
   const [classLoading, setClassLoading] = useState(true)
@@ -45,8 +49,8 @@ export default function ClassDashboardPage() {
         }
       } catch (err) {
         if (isMounted) {
-          // Redirect to teacher dashboard if class is not found or unauthorized
-          navigate('/teacher-dashboard', { replace: true })
+          // Redirect to the correct dashboard if class is not found or unauthorized
+          navigate(isTeacher ? '/teacher-dashboard' : '/student-dashboard', { replace: true })
         }
       } finally {
         if (isMounted) setClassLoading(false)
@@ -86,7 +90,7 @@ export default function ClassDashboardPage() {
       {/* Simple top nav just for back navigation */}
       <header className="px-6 py-4 flex items-center border-b" style={{ borderColor: '#E2DED8', backgroundColor: '#FDFCF9' }}>
         <Link
-          to="/teacher-dashboard"
+          to={isTeacher ? '/teacher-dashboard' : '/student-dashboard'}
           className="flex items-center gap-2 text-sm font-medium transition-colors duration-150"
           style={{ color: '#8A94A6' }}
           onMouseEnter={e => { e.currentTarget.style.color = '#16293B' }}
@@ -106,11 +110,29 @@ export default function ClassDashboardPage() {
           ) : classLoading ? (
             <SkeletonBlock height="120px" radius="1rem" />
           ) : classData ? (
-            <ClassCodeDisplay 
-              name={classData.name} 
-              subject={classData.subject} 
-              code={classData.class_code} 
-            />
+            isTeacher ? (
+              <ClassCodeDisplay 
+                name={classData.name} 
+                subject={classData.subject} 
+                code={classData.class_code} 
+              />
+            ) : (
+              // Student view — no class code, shows teacher name instead
+              <div
+                className="w-full rounded-2xl p-8 border"
+                style={{ backgroundColor: '#FDFCF9', borderColor: '#E2DED8' }}
+              >
+                <h1 className="font-display text-3xl font-semibold mb-1" style={{ color: '#16293B' }}>
+                  {classData.name}
+                </h1>
+                <p className="text-sm font-medium mb-3" style={{ color: '#8A94A6' }}>
+                  {classData.subject}
+                </p>
+                <p className="text-sm" style={{ color: '#26313D' }}>
+                  Taught by <span className="font-semibold">{classData.teacher_name ?? 'your teacher'}</span>
+                </p>
+              </div>
+            )
           ) : null}
         </section>
 
@@ -120,9 +142,11 @@ export default function ClassDashboardPage() {
             <h2 className="text-xl font-semibold" style={{ color: '#16293B' }}>
               Question bank
             </h2>
-            <Button onClick={() => navigate(`/class/${id}/create-question`)} className="py-2 px-4 text-xs">
-              Add question
-            </Button>
+            {isTeacher && (
+              <Button onClick={() => navigate(`/class/${id}/create-question`)} className="py-2 px-4 text-xs">
+                Add question
+              </Button>
+            )}
           </div>
 
           {questionsError ? (
@@ -141,8 +165,10 @@ export default function ClassDashboardPage() {
             </div>
           ) : (
             <EmptyState
-              heading="Your question bank is empty"
-              body="Add your first question to start testing your students."
+              heading="No questions yet"
+              body={isTeacher
+                ? 'Add your first question to start testing your students.'
+                : 'Your teacher has not added any questions yet. Check back later.'}
             />
           )}
         </section>

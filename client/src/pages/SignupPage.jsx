@@ -27,8 +27,7 @@ export default function SignupPage() {
   const [email, setEmail]           = useState('')
   const [password, setPassword]     = useState('')
   const [role, setRole]             = useState('teacher')
-  const [schoolName, setSchoolName] = useState('')
-  const [classCode, setClassCode]   = useState('')
+  const [schoolCode, setSchoolCode] = useState('')
   const [showPw, setShowPw]         = useState(false)
   const [loading, setLoading]       = useState(false)
   const [success, setSuccess]       = useState(false)
@@ -40,8 +39,7 @@ export default function SignupPage() {
     if (!fullName.trim()) errs.fullName = 'Please enter your full name.'
     if (!email.trim()) errs.email = 'Please enter your email address.'
     if (!password || password.length < 8) errs.password = 'Password must be at least 8 characters.'
-    if (role === 'teacher' && !schoolName.trim()) errs.schoolName = 'Please enter your school name.'
-    if (role === 'student' && !classCode.trim()) errs.classCode = 'Please enter the class code your teacher gave you.'
+    if (!schoolCode.trim()) errs.schoolCode = 'Please enter your school code.'
     return errs
   }
 
@@ -92,8 +90,7 @@ export default function SignupPage() {
         id: userId,
         full_name: fullName,
         role,
-        school_name: role === 'teacher' ? schoolName : undefined,
-        class_code: role === 'student' ? classCode : undefined,
+        school_code: schoolCode,
       })
     } catch (profileError) {
       setFormError(profileError.message)
@@ -230,40 +227,21 @@ export default function SignupPage() {
               {/* Role toggle */}
               <RoleToggle value={role} onChange={setRole} />
 
-              {/* Conditional: school name (teacher) */}
-              {role === 'teacher' && (
-                <div className="animate-fade-in">
-                  <FormField
-                    id="signup-school"
-                    label="School name"
-                    type="text"
-                    value={schoolName}
-                    onChange={e => setSchoolName(e.target.value)}
-                    placeholder="e.g. Westfield Academy"
-                    autoComplete="organization"
-                    required
-                    error={errors.schoolName}
-                  />
-                </div>
-              )}
-
-              {/* Conditional: class code (student) */}
-              {role === 'student' && (
-                <div>
-                  <FormField
-                    id="signup-classcode"
-                    label="Class code"
-                    type="text"
-                    value={classCode}
-                    onChange={e => setClassCode(e.target.value)}
-                    placeholder="e.g. BIO-3A"
-                    autoComplete="off"
-                    required
-                    helperText="Ask your teacher for this code."
-                    error={errors.classCode}
-                  />
-                </div>
-              )}
+              {/* School code (both roles) */}
+              <div className="animate-fade-in">
+                <FormField
+                  id="signup-schoolcode"
+                  label="School code"
+                  type="text"
+                  value={schoolCode}
+                  onChange={e => setSchoolCode(e.target.value)}
+                  placeholder="e.g. WEST-1A"
+                  autoComplete="off"
+                  required
+                  helperText="Ask your school administrator for this code."
+                  error={errors.schoolCode}
+                />
+              </div>
 
               <div className="pt-1">
                 <AuthButton loading={loading}>
