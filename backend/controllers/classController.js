@@ -78,3 +78,26 @@ export const joinClass = async (req, res, next) => {
     next(err);
   }
 };
+
+export const browseSchoolClasses = async (req, res, next) => {
+  try {
+    const profile = await profileService.getProfileById(req.user.id);
+    if (!profile) {
+      return res.status(404).json({ error: 'Profile not found.' });
+    }
+
+    if (profile.role !== 'student') {
+      return res.status(403).json({ error: 'Only students can browse school classes.' });
+    }
+
+    if (!profile.school_id) {
+      return res.status(404).json({ error: 'You are not linked to a school yet.' });
+    }
+
+    const classes = await classService.getSchoolClasses(profile.school_id, req.user.id);
+
+    res.status(200).json({ classes });
+  } catch (err) {
+    next(err);
+  }
+};

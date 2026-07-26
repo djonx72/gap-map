@@ -180,3 +180,71 @@ export const enrollStudent = async ({ classId, studentId }) => {
   return data;
 };
 
+export const getSchoolClasses = async (schoolId, studentId) => {
+  // Step A: Query classes for the given school, selecting specific fields (NO class_code)
+  const { data: classesData, error: classesError } = await supabaseAdmin
+    .from('classes')
+    .select('id, name, subject, teacher_id, created_at')
+    .eq('school_id', schoolId)
+    .order('created_at', { ascending: false });
+
+  if (classesError) {
+    console.error('[classService.getSchoolClasses] DB error (classes):', classesError);
+    const err = new Error('Failed to load classes. Please try again.');
+    err.statusCode = 500;
+    err.publicMessage = 'Failed to load classes. Please try again.';
+    throw err;
+  }
+
+  // Step F: Return early if zero classes
+  if (!classesData || classesData.length === 0) {
+    return [];
+  }
+
+  // Step B: Query profiles for the distinct set of teacher_ids
+  const teacherIds = [...new Set(classesData.map(c => c.teacher_id))];
+  const { data: teachersData, error: teachersError } = await supabaseAdmin
+    .from('profiles')
+    .select('id, full_name')
+    .in('id', teacherIds);
+
+  if (teachersError) {
+    console.error('[classService.getSchoolClasses] DB error (profiles):', teachersError);
+    const err = new Error('Failed to load classes. Please try again.');
+    err.statusCode = 500;
+    err.publicMessage = 'Failed to load classes. Please try again.';
+    throw err;
+  }
+
+  const teacherMap = {};
+  teachersData.forEach(t => {
+    teacherMap[t.id] = t.full_name;
+  });
+
+  // Step C: Query class_enrollments for the student's enrollments in these classes
+  const classIds = classesData.map(c => c.id);
+  const { data: enrollmentsData, error: enrollmentsError } = await supabaseAdmin
+    .from('class_enrollments')
+    .select('class_id')
+    .eq('student_id', studentId)
+    .in('class_id', classIds);
+
+  if (enrollmentsError) {
+    console.error('[classService.getSchoolClasses] DB error (enrollments):', enrollmentsError);
+    const err = new Error('Failed to load classes. Please try again.');
+    err.statusCode = 500;
+    err.publicMessage = 'Failed to load classes. Please try again.';
+    throw err;
+  }
+
+  const enrolledClassIds = new Set(enrollmentsData.map(e => e.class_id));
+
+  // Step D: Merge all into final array
+  return classesData.map(c => ({
+    id: c.id,
+    name: c.name,
+    subject: c.subject,
+    teacher_name: teacherMap[c.teacher_id] || 'Unknown Teacher',
+    is_enrolled: enrolledClassIds.has(c.id)
+  }));
+};
