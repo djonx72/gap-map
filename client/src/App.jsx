@@ -27,7 +27,7 @@ export default function App() {
         <Route
           path="/class/:id"
           element={
-            <ProtectedRoute allowedRole="teacher">
+            <ProtectedRoute>
               <ClassDashboardPage />
             </ProtectedRoute>
           }

@@ -55,8 +55,32 @@ export const createQuestion = async (teacherId, classId, questionData) => {
   return data;
 };
 
-export const getClassQuestions = async (classId, teacherId) => {
-  await verifyClassOwnership(classId, teacherId);
+export const getClassQuestions = async (classId, userId) => {
+  // Step 1: Check if user is the class teacher
+  const { data: classData } = await supabaseAdmin
+    .from('classes')
+    .select('teacher_id')
+    .eq('id', classId)
+    .single();
+
+  const isTeacher = classData?.teacher_id === userId;
+
+  if (!isTeacher) {
+    // Step 2: Check if user is an enrolled student
+    const { data: enrollment } = await supabaseAdmin
+      .from('class_enrollments')
+      .select('id')
+      .eq('class_id', classId)
+      .eq('student_id', userId)
+      .single();
+
+    if (!enrollment) {
+      const err = new Error('You do not have access to this class.');
+      err.statusCode = 403;
+      err.publicMessage = 'You do not have access to this class.';
+      throw err;
+    }
+  }
 
   const { data, error } = await supabaseAdmin
     .from('questions')
@@ -72,5 +96,12 @@ export const getClassQuestions = async (classId, teacherId) => {
     throw err;
   }
 
-  return data || [];
+  const questions = data || [];
+
+  // Students must not see the correct answers
+  if (!isTeacher) {
+    return questions.map(({ correct_answer, ...rest }) => rest);
+  }
+
+  return questions;
 };

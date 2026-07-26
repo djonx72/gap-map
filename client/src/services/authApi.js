@@ -13,13 +13,12 @@
  * @param {string} params.id           - Supabase auth user ID (UUID).
  * @param {string} params.full_name    - User's full name.
  * @param {string} params.role         - 'teacher' | 'student'
- * @param {string} [params.school_name] - Required when role === 'teacher'.
- * @param {string} [params.class_code]  - Required when role === 'student'.
+ * @param {string} params.school_code  - The school code the user belongs to.
  *
  * @returns {Promise<Object>} Parsed success response from the backend.
  * @throws  {Error}          Error whose message is the backend's actual error string.
  */
-export async function createProfile({ accessToken, id, full_name, role, school_name, class_code }) {
+export async function createProfile({ accessToken, id, full_name, role, school_code }) {
   const response = await fetch(
     `${import.meta.env.VITE_API_BASE_URL}/auth/create-profile`,
     {
@@ -28,7 +27,7 @@ export async function createProfile({ accessToken, id, full_name, role, school_n
         'Content-Type': 'application/json',
         Authorization: `Bearer ${accessToken}`,
       },
-      body: JSON.stringify({ id, full_name, role, school_name, class_code }),
+      body: JSON.stringify({ id, full_name, role, school_code }),
     }
   )
 

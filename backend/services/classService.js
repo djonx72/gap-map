@@ -39,8 +39,8 @@ export const generateUniqueClassCode = async () => {
   throw err;
 };
 
-export const createClass = async (teacherId, name, subject) => {
-  if (!name || !subject || !teacherId) {
+export const createClass = async (teacherId, name, subject, schoolId) => {
+  if (!name || !subject || !teacherId || !schoolId) {
     const err = new Error('Validation failed');
     err.statusCode = 400;
     err.publicMessage = 'Missing required fields.';
@@ -56,7 +56,7 @@ export const createClass = async (teacherId, name, subject) => {
     const { data, error } = await supabaseAdmin
       .from('classes')
       .insert([
-        { name: trimmedName, subject: trimmedSubject, teacher_id: teacherId, class_code }
+        { name: trimmedName, subject: trimmedSubject, teacher_id: teacherId, class_code, school_id: schoolId }
       ])
       .select()
       .single();
@@ -100,18 +100,17 @@ export const getTeacherClasses = async (teacherId) => {
   return data || [];
 };
 
-export const getClassById = async (classId, teacherId) => {
-  const { data, error } = await supabaseAdmin
+export const getClassById = async (classId, userId) => {
+  // 1. Fetch the class first
+  const { data: classData, error: classError } = await supabaseAdmin
     .from('classes')
     .select('*')
     .eq('id', classId)
-    .eq('teacher_id', teacherId)
     .single();
 
-  if (error) {
-    // If no row is found, Supabase returns PGRST116.
-    if (error.code !== 'PGRST116') {
-      console.error('[classService.getClassById] DB select error:', error);
+  if (classError || !classData) {
+    if (classError && classError.code !== 'PGRST116') {
+      console.error('[classService.getClassById] DB select error:', classError);
       const err = new Error('Failed to load class.');
       err.statusCode = 500;
       err.publicMessage = 'Failed to load class. Please try again.';
@@ -123,14 +122,40 @@ export const getClassById = async (classId, teacherId) => {
     throw err;
   }
 
-  if (!data) {
+  // 2. If the user is the teacher who created it, grant full access
+  if (classData.teacher_id === userId) {
+    return classData;
+  }
+
+  // 3. Otherwise, check if the user is an enrolled student
+  const { data: enrollmentData, error: enrollmentError } = await supabaseAdmin
+    .from('class_enrollments')
+    .select('id')
+    .eq('class_id', classId)
+    .eq('student_id', userId)
+    .single();
+
+  // If they aren't enrolled (or error), return a 404 (to avoid leaking class existence)
+  if (enrollmentError || !enrollmentData) {
     const err = new Error('Class not found.');
     err.statusCode = 404;
     err.publicMessage = 'Class not found.';
     throw err;
   }
 
-  return data;
+  // 4. Fetch teacher name for the student view
+  const { data: teacherProfile } = await supabaseAdmin
+    .from('profiles')
+    .select('full_name')
+    .eq('id', classData.teacher_id)
+    .single();
+
+  // 5. Return the class data to the student: strip class_code, attach teacher_name
+  const { class_code, ...studentSafeClassData } = classData;
+  return {
+    ...studentSafeClassData,
+    teacher_name: teacherProfile?.full_name ?? 'Unknown Teacher',
+  };
 };
 
 export const findClassByCode = async (code) => {

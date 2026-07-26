@@ -10,7 +10,13 @@ export const createClass = async (req, res, next) => {
     }
 
     const { name, subject } = validation.data;
-    const newClass = await classService.createClass(req.user.id, name, subject);
+    
+    const profile = await profileService.getProfileById(req.user.id);
+    if (!profile || profile.role !== 'teacher') {
+      return res.status(403).json({ error: 'Only teachers can create classes.' });
+    }
+
+    const newClass = await classService.createClass(req.user.id, name, subject, profile.school_id);
 
     res.status(201).json({ message: 'Class created successfully', class: newClass });
   } catch (err) {
