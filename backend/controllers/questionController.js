@@ -1,11 +1,18 @@
 import { validateCreateQuestionInput, validateClassIdParam } from '../validators/questionValidators.js';
 import * as questionService from '../services/questionService.js';
+import * as profileService from '../services/profileService.js';
 
 export const createQuestion = async (req, res, next) => {
   try {
     const validation = validateCreateQuestionInput(req.body);
     if (!validation.isValid) {
       return res.status(400).json({ error: validation.error });
+    }
+
+    // Reject non-teachers early — saves a DB roundtrip in the service layer
+    const profile = await profileService.getProfileById(req.user.id);
+    if (!profile || profile.role !== 'teacher') {
+      return res.status(403).json({ error: 'Only teachers can create questions.' });
     }
 
     const { class_id } = validation.data;

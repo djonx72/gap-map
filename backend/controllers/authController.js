@@ -22,7 +22,8 @@ export const createProfile = async (req, res, next) => {
     return res.status(400).json({ error: validationResult.error });
   }
 
-  const { id, full_name, role, school_code } = req.body;
+  // Use sanitised values from the validator (HTML-stripped name, trimmed school code)
+  const { id, full_name, role, school_code } = validationResult.data;
 
   // Step 2: Identity check — the token's subject must match the supplied id
   if (id !== req.user.id) {

@@ -38,7 +38,20 @@ export default function SignupPage() {
     const errs = {}
     if (!fullName.trim()) errs.fullName = 'Please enter your full name.'
     if (!email.trim()) errs.email = 'Please enter your email address.'
-    if (!password || password.length < 8) errs.password = 'Password must be at least 8 characters.'
+    
+    // Password complexity: min 8 chars, uppercase, lowercase, digit, special char
+    if (!password || password.length < 8) {
+      errs.password = 'Password must be at least 8 characters.'
+    } else if (!/[A-Z]/.test(password)) {
+      errs.password = 'Password must include at least one uppercase letter.'
+    } else if (!/[a-z]/.test(password)) {
+      errs.password = 'Password must include at least one lowercase letter.'
+    } else if (!/[0-9]/.test(password)) {
+      errs.password = 'Password must include at least one number.'
+    } else if (!/[^A-Za-z0-9]/.test(password)) {
+      errs.password = 'Password must include at least one special character.'
+    }
+
     if (!schoolCode.trim()) errs.schoolCode = 'Please enter your school code.'
     return errs
   }

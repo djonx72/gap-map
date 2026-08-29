@@ -46,7 +46,7 @@ export const findSchoolByCode = async (code) => {
 
   const { data, error } = await supabaseAdmin
     .from('schools')
-    .select('*')
+    .select('id, school_code, school_name, is_active')
     .eq('school_code', normalizedCode)
     .eq('is_active', true)
     .maybeSingle();

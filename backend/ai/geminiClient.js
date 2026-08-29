@@ -37,10 +37,15 @@ async function callGemini(systemPrompt, userMessage) {
   let response;
   try {
     response = await fetch(
-      `${GEMINI_URL}?key=${apiKey}`,
+      GEMINI_URL,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          // API key sent via header instead of URL query parameter to prevent
+          // key leakage through server access logs and proxy logs.
+          'x-goog-api-key': apiKey,
+        },
         body: JSON.stringify(requestBody),
         signal: controller.signal
       }

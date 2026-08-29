@@ -109,7 +109,7 @@ export function applySwagger(app) {
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
     customSiteTitle: 'GapMap API Docs',
     swaggerOptions: {
-      persistAuthorization: true, // keeps the Bearer token between page reloads
+      persistAuthorization: false, // Do not persist Bearer tokens in localStorage
     },
   }));
 
