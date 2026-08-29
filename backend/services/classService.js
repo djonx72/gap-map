@@ -1,3 +1,4 @@
+import { randomInt } from 'node:crypto';
 import supabaseAdmin from '../lib/supabaseAdmin.js';
 
 const CLASS_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -5,7 +6,9 @@ const CLASS_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const generateRandomCode = () => {
   let result = '';
   for (let i = 0; i < 6; i++) {
-    result += CLASS_CODE_CHARS.charAt(Math.floor(Math.random() * CLASS_CODE_CHARS.length));
+    // Use cryptographically secure random integers instead of Math.random().
+    // Class codes act as access tokens — predictable codes are exploitable.
+    result += CLASS_CODE_CHARS.charAt(randomInt(CLASS_CODE_CHARS.length));
   }
   return result;
 };
@@ -85,7 +88,7 @@ export const createClass = async (teacherId, name, subject, schoolId) => {
 export const getTeacherClasses = async (teacherId) => {
   const { data, error } = await supabaseAdmin
     .from('classes')
-    .select('*')
+    .select('id, name, subject, teacher_id, class_code, school_id, created_at')
     .eq('teacher_id', teacherId)
     .order('created_at', { ascending: false });
 
@@ -104,7 +107,7 @@ export const getClassById = async (classId, userId) => {
   // 1. Fetch the class first
   const { data: classData, error: classError } = await supabaseAdmin
     .from('classes')
-    .select('*')
+    .select('id, name, subject, teacher_id, class_code, school_id, created_at')
     .eq('id', classId)
     .single();
 
@@ -163,7 +166,7 @@ export const findClassByCode = async (code) => {
 
   const { data, error } = await supabaseAdmin
     .from('classes')
-    .select('*')
+    .select('id, name, subject, teacher_id, class_code, school_id, created_at')
     .eq('class_code', normalizedCode)
     .maybeSingle();
 
