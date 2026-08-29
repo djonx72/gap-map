@@ -84,7 +84,7 @@ export const getClassQuestions = async (classId, userId) => {
 
   const { data, error } = await supabaseAdmin
     .from('questions')
-    .select('*')
+    .select('id, class_id, teacher_id, topic, type, difficulty, content, correct_answer, options, created_at')
     .eq('class_id', classId)
     .order('created_at', { ascending: false });
 

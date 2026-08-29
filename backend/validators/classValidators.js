@@ -32,9 +32,14 @@ export const validateJoinClassInput = (body) => {
     return { isValid: false, error: 'class_code is required and must be a string.' };
   }
   
-  class_code = class_code.trim();
+  class_code = class_code.toUpperCase().trim();
   if (class_code.length === 0) {
     return { isValid: false, error: 'class_code cannot be empty.' };
+  }
+
+  // Class codes are exactly 6 uppercase alphanumeric characters (excluding I, O, 0, 1)
+  if (!/^[A-Z0-9]{6}$/.test(class_code)) {
+    return { isValid: false, error: 'Invalid class code format. Must be 6 alphanumeric characters.' };
   }
   
   return { isValid: true, data: { class_code } };

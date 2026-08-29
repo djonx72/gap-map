@@ -1,11 +1,11 @@
-// backend/ai/test.js
+// backend/tests/test.js
 // Run this to test the AI engine independently
-// Usage: node ai/test.js
+// Usage: node tests/test.js
 
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-import { analyseAnswer } from './analyseAnswer.js';
+import { analyseAnswer } from '../ai/analyseAnswer.js';
 
 const testCases = [
   {

@@ -26,6 +26,12 @@ export const createClass = async (req, res, next) => {
 
 export const listClasses = async (req, res, next) => {
   try {
+    // Only teachers can list their own classes
+    const profile = await profileService.getProfileById(req.user.id);
+    if (!profile || profile.role !== 'teacher') {
+      return res.status(403).json({ error: 'Only teachers can list classes.' });
+    }
+
     const classes = await classService.getTeacherClasses(req.user.id);
     res.status(200).json({ classes });
   } catch (err) {
@@ -38,6 +44,12 @@ export const getClass = async (req, res, next) => {
     const { id } = req.params;
     if (!isValidUUID(id)) {
       return res.status(400).json({ error: 'Invalid class ID' });
+    }
+
+    // Verify the user has a valid profile before proceeding
+    const profile = await profileService.getProfileById(req.user.id);
+    if (!profile) {
+      return res.status(404).json({ error: 'Profile not found.' });
     }
 
     const classData = await classService.getClassById(id, req.user.id);

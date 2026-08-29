@@ -1,13 +1,13 @@
-// backend/ai/verifyAI.js
+// backend/tests/verifyAI.js
 // Runs Elvis's official test cases (from his AI Engine Brief) against analyseAnswer.js
 // and validates the response against the ai_analyses data contract.
 //
-// Usage: node ai/verifyAI.js (run from inside the backend folder)
+// Usage: node tests/verifyAI.js (run from inside the backend folder)
 // Requires: GEMINI_API_KEY in your .env file.
 
 import * as dotenv from 'dotenv';
 dotenv.config();
-import { analyseAnswer } from './analyseAnswer.js';
+import { analyseAnswer } from '../ai/analyseAnswer.js';
 
 const testCases = [
   {

@@ -115,10 +115,14 @@ app.use(
       );
       return callback(new Error(`CORS: origin "${requestOrigin}" is not allowed.`));
     },
-    credentials: true,
+    // credentials: true removed — the app uses Bearer tokens in Authorization
+    // headers, not cookies. Sending cookies cross-origin unnecessarily opens
+    // CSRF risk if any future feature stores session data in cookies.
   })
 );
-app.use(express.json());
+// Explicit body size limit — prevents large-payload DoS attacks.
+// 16kb is generous for any legitimate GapMap request body.
+app.use(express.json({ limit: '16kb' }));
 
 // ── Request / response logging ────────────────────────────────────────────────
 // Morgan logs every inbound request: method, path, status, timing, and body.
@@ -169,7 +173,7 @@ app.use('/submissions', aiLimiter);
 // ── Error handling (must be last) ─────────────────────────────────────────────
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   const isProd = process.env.NODE_ENV === 'production';
   const baseUrl = isProd 
     ? (process.env.BACKEND_URL || `http://localhost:${PORT}`) 
@@ -179,3 +183,7 @@ app.listen(PORT, () => {
   console.log(`📖  API docs:  ${baseUrl}/api-docs`);
   console.log(`📄  Raw spec:  ${baseUrl}/api-docs.json\n`);
 });
+
+// Guard against slow-loris and stalled-connection DoS attacks.
+// Connections idle for more than 30 seconds are terminated.
+server.setTimeout(30000);

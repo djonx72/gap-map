@@ -11,6 +11,10 @@ const requiredEnvs = [
   // engine. This must also be set on the hosting dashboard (e.g. Render's
   // Environment Variables) — the .env file alone is not read in production.
   'FRONTEND_URL',
+  // GEMINI_API_KEY is required for the AI diagnostic engine. Without it the
+  // server starts but all AI analysis calls silently fail — better to crash
+  // at startup so the misconfiguration is caught immediately.
+  'GEMINI_API_KEY',
 ];
 
 const missingEnvs = requiredEnvs.filter(envName => !process.env[envName]);
