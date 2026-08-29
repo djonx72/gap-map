@@ -123,6 +123,7 @@ app.use(
 // Explicit body size limit — prevents large-payload DoS attacks.
 // 16kb is generous for any legitimate GapMap request body.
 app.use(express.json({ limit: '16kb' }));
+app.use(express.urlencoded({ extended: true, limit: '16kb' }));
 
 // ── Request / response logging ────────────────────────────────────────────────
 // Morgan logs every inbound request: method, path, status, timing, and body.

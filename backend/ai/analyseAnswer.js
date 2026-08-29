@@ -25,8 +25,8 @@ async function analyseAnswer(submission) {
   const VALID_TYPES = ['mcq', 'short', 'long', 'math'];
   const VALID_DIFFICULTIES = ['easy', 'medium', 'hard'];
 
-  // Destructure submission_id early so it's available in all return paths
-  const { submission_id } = submission;
+  // FIX: Extract submission_id so all return paths have it defined
+  const submission_id = submission.submission_id ?? null;
 
   // Validate required fields
   const required = ['subject', 'topic', 'difficulty', 'question',
