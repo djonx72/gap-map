@@ -1,4 +1,5 @@
 import supabaseAdmin from '../lib/supabaseAdmin.js';
+import { verifyStudentEnrollment } from './classService.js';
 
 export const verifyClassOwnership = async (classId, teacherId) => {
   const { data, error } = await supabaseAdmin
@@ -56,31 +57,7 @@ export const createQuestion = async (teacherId, classId, questionData) => {
 };
 
 export const getClassQuestions = async (classId, userId) => {
-  // Step 1: Check if user is the class teacher
-  const { data: classData } = await supabaseAdmin
-    .from('classes')
-    .select('teacher_id')
-    .eq('id', classId)
-    .single();
-
-  const isTeacher = classData?.teacher_id === userId;
-
-  if (!isTeacher) {
-    // Step 2: Check if user is an enrolled student
-    const { data: enrollment } = await supabaseAdmin
-      .from('class_enrollments')
-      .select('id')
-      .eq('class_id', classId)
-      .eq('student_id', userId)
-      .single();
-
-    if (!enrollment) {
-      const err = new Error('You do not have access to this class.');
-      err.statusCode = 403;
-      err.publicMessage = 'You do not have access to this class.';
-      throw err;
-    }
-  }
+  await verifyClassOwnership(classId, userId);
 
   const { data, error } = await supabaseAdmin
     .from('questions')
@@ -96,12 +73,25 @@ export const getClassQuestions = async (classId, userId) => {
     throw err;
   }
 
-  const questions = data || [];
+  return data || [];
+};
 
-  // Students must not see the correct answers
-  if (!isTeacher) {
-    return questions.map(({ correct_answer, ...rest }) => rest);
+export const getQuizQuestions = async (classId, studentId) => {
+  await verifyStudentEnrollment(classId, studentId);
+
+  const { data, error } = await supabaseAdmin
+    .from('questions')
+    .select('id, topic, type, difficulty, content, options')
+    .eq('class_id', classId)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error('[questionService.getQuizQuestions] DB error:', error);
+    const err = new Error('Failed to fetch quiz questions.');
+    err.statusCode = 500;
+    err.publicMessage = 'Failed to fetch quiz questions. Please try again.';
+    throw err;
   }
 
-  return questions;
+  return data || [];
 };

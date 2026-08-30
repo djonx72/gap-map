@@ -14,6 +14,7 @@ import {
 } from './middleware/rateLimiter.js';
 import classRoutes from './routes/classes.js';
 import questionRoutes from './routes/questions.js';
+import submissionRoutes from './routes/submissions.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -164,12 +165,12 @@ app.use('/auth', authLimiter, authRoutes);
 app.use('/classes', classRoutes);
 app.use('/questions', questionRoutes);
 
-// aiLimiter is pre-wired to /submissions now so the protection is already in
-// place the moment the submission routes are added in a later chunk.
+// aiLimiter is scoped to /submissions/quiz since it triggers calls to the Gemini AI API.
 // A path with a limiter and no route handlers attached does NOT cause startup
 // or runtime errors — Express simply passes the request through to the 404
 // handler if no matching route is registered.
-app.use('/submissions', aiLimiter);
+app.use('/submissions/quiz', aiLimiter);
+app.use('/submissions', submissionRoutes);
 
 // ── Error handling (must be last) ─────────────────────────────────────────────
 app.use(errorHandler);

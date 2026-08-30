@@ -65,10 +65,7 @@ export default function StudentDashboardPage() {
 
   const handleClassClick = (cls) => {
     if (cls.isEnrolled) {
-      navigate(`/class/${cls.id}`)
-    } else {
-      setPreselectedClassName(cls.name)
-      setIsJoinModalOpen(true)
+      navigate(`/student/class/${cls.id}`)
     }
   }
 
@@ -151,7 +148,7 @@ export default function StudentDashboardPage() {
                   subject={cls.subject}
                   teacherName={cls.teacherName}
                   isEnrolled={cls.isEnrolled}
-                  onClick={() => handleClassClick(cls)}
+                  onClick={cls.isEnrolled ? () => handleClassClick(cls) : undefined}
                 />
               ))}
             </div>
