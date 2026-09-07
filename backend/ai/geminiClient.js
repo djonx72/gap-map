@@ -24,10 +24,7 @@ async function callGemini(systemPrompt, userMessage) {
     generationConfig: {
       temperature: 0.2,
       maxOutputTokens: 2000,
-      responseMimeType: 'application/json',
-      thinkingConfig: {
-        thinkingBudget: 0,
-      },
+      responseMimeType: 'application/json'
     }
   };
 
