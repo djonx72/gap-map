@@ -47,13 +47,17 @@ export default function SchoolClassCard({ name, subject, teacherName, isEnrolled
             Taught by {teacherName}
           </div>
         </div>
-        {isEnrolled && (
+        {isEnrolled ? (
           <div
             className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold"
             style={{ backgroundColor: '#EDF2EC', color: '#7A9B76' }}
             aria-label="You are enrolled in this class"
           >
             Enrolled
+          </div>
+        ) : (
+          <div className="text-xs" style={{ color: '#8A94A6' }}>
+            Join class to access
           </div>
         )}
       </div>

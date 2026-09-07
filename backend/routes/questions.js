@@ -9,5 +9,6 @@ router.use(verifyToken);
 
 router.post('/', writeLimiter, questionController.createQuestion);
 router.get('/:classId', questionController.listClassQuestions);
+router.get('/:classId/quiz', questionController.getQuizQuestions);
 
 export default router;

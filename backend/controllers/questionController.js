@@ -9,12 +9,6 @@ export const createQuestion = async (req, res, next) => {
       return res.status(400).json({ error: validation.error });
     }
 
-    // Reject non-teachers early — saves a DB roundtrip in the service layer
-    const profile = await profileService.getProfileById(req.user.id);
-    if (!profile || profile.role !== 'teacher') {
-      return res.status(403).json({ error: 'Only teachers can create questions.' });
-    }
-
     const { class_id } = validation.data;
     const newQuestion = await questionService.createQuestion(req.user.id, class_id, validation.data);
 
@@ -32,6 +26,29 @@ export const listClassQuestions = async (req, res, next) => {
     }
 
     const questions = await questionService.getClassQuestions(classId, req.user.id);
+    res.status(200).json({ questions });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getQuizQuestions = async (req, res, next) => {
+  try {
+    const { classId } = req.params;
+    if (!validateClassIdParam(classId)) {
+      return res.status(400).json({ error: 'Invalid class ID' });
+    }
+
+    const profile = await profileService.getProfileById(req.user.id);
+    if (!profile) {
+      return res.status(404).json({ error: 'Profile not found.' });
+    }
+
+    if (profile.role !== 'student') {
+      return res.status(403).json({ error: 'Only students can take a quiz.' });
+    }
+
+    const questions = await questionService.getQuizQuestions(classId, req.user.id);
     res.status(200).json({ questions });
   } catch (err) {
     next(err);

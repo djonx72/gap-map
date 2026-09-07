@@ -8,6 +8,9 @@ import StudentDashboardPage from './pages/StudentDashboardPage.jsx'
 import CreateClassPage from './pages/CreateClassPage.jsx'
 import ClassDashboardPage from './pages/ClassDashboardPage.jsx'
 import CreateQuestionPage from './pages/CreateQuestionPage.jsx'
+import StudentClassView from './pages/StudentClassView.jsx'
+import QuizPage from './pages/QuizPage.jsx'
+import QuizResults from './pages/QuizResults.jsx'
 
 export default function App() {
   return (
@@ -53,6 +56,30 @@ export default function App() {
           element={
             <ProtectedRoute allowedRole="student">
               <StudentDashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/class/:id"
+          element={
+            <ProtectedRoute allowedRole="student">
+              <StudentClassView />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/class/:id/quiz"
+          element={
+            <ProtectedRoute allowedRole="student">
+              <QuizPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/class/:id/results"
+          element={
+            <ProtectedRoute allowedRole="student">
+              <QuizResults />
             </ProtectedRoute>
           }
         />

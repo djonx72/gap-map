@@ -276,3 +276,28 @@ export const getSchoolClasses = async (schoolId, studentId) => {
     is_enrolled: enrolledClassIds.has(c.id)
   }));
 };
+
+export const verifyStudentEnrollment = async (classId, studentId) => {
+  const { data, error } = await supabaseAdmin
+    .from('class_enrollments')
+    .select('id')
+    .eq('class_id', classId)
+    .eq('student_id', studentId)
+    .maybeSingle();
+
+  if (error) {
+    const err = new Error(`DB query failed in verifyStudentEnrollment: ${error.message}`);
+    err.statusCode = 500;
+    err.publicMessage = 'Unable to verify enrollment right now. Please try again.';
+    throw err;
+  }
+
+  if (!data) {
+    const err = new Error('Not enrolled');
+    err.statusCode = 403;
+    err.publicMessage = 'You are not enrolled in this class.';
+    throw err;
+  }
+
+  return true;
+};
