@@ -1,8 +1,8 @@
 // backend/ai/geminiClient.js
-// Makes the API call to Google Gemini Flash
+// Makes the API call to Google Gemini Pro
 
 const GEMINI_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent';
 
 async function callGemini(systemPrompt, userMessage) {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -32,7 +32,7 @@ async function callGemini(systemPrompt, userMessage) {
   };
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
+  const timeout = setTimeout(() => controller.abort(), 30000);
 
   let response;
   try {
@@ -52,7 +52,7 @@ async function callGemini(systemPrompt, userMessage) {
     );
   } catch (err) {
     if (err.name === 'AbortError') {
-      throw new Error('Gemini API request timed out after 15 seconds');
+      throw new Error('Gemini API request timed out after 30 seconds');
     }
     throw err;
   } finally {
