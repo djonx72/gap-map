@@ -2,7 +2,7 @@
 // Makes the API call to Google Gemini Pro
 
 const GEMINI_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent';
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent';
 
 async function callGemini(systemPrompt, userMessage) {
   const apiKey = process.env.GEMINI_API_KEY;
