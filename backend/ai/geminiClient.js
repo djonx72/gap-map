@@ -21,15 +21,18 @@ async function callGemini(systemPrompt, userMessage) {
         parts: [{ text: userMessage }]
       }
     ],
-    generationConfig: {
-      temperature: 0.2,
-      maxOutputTokens: 2000,
-      responseMimeType: 'application/json'
-    }
+  generationConfig: {
+  temperature: 0.2,
+  maxOutputTokens: 2000,
+  responseMimeType: 'application/json',
+  thinkingConfig: {
+    thinkingLevel: 'minimal',
+  },
+}
   };
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
+  const timeout = setTimeout(() => controller.abort(), 30000);
 
   let response;
   try {
@@ -49,7 +52,7 @@ async function callGemini(systemPrompt, userMessage) {
     );
   } catch (err) {
     if (err.name === 'AbortError') {
-      throw new Error('Gemini API request timed out after 15 seconds');
+      throw new Error('Gemini API request timed out after 30 seconds');
     }
     throw err;
   } finally {
