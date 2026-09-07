@@ -2,7 +2,7 @@
 // Makes the API call to Google Gemini Flash
 
 const GEMINI_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent';
 
 async function callGemini(systemPrompt, userMessage) {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -24,10 +24,7 @@ async function callGemini(systemPrompt, userMessage) {
     generationConfig: {
       temperature: 0.2,
       maxOutputTokens: 2000,
-      responseMimeType: 'application/json',
-      thinkingConfig: {
-        thinkingBudget: 0,
-      },
+      responseMimeType: 'application/json'
     }
   };
 
